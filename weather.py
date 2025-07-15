@@ -1,0 +1,58 @@
+import os
+import telebot
+import requests
+
+# === Configuration ===
+BOT_TOKEN = "7676117456:AAHoTyyxV8ILubH4qlgSMkoOOPPQ5yZCYVM"
+WEATHER_API_KEY = "e259f0232f2bbed922e55a1facc3ef43"
+bot = telebot.TeleBot(BOT_TOKEN)
+
+# === /start command ===
+@bot.message_handler(commands=['start'])
+def handle_start(message):
+    bot.reply_to(message, "🌤️ Welcome to Weather Bot!\nType /weather <city> to get current weather.\nExample: /weather Addis Ababa")
+
+# === /weather command ===
+@bot.message_handler(commands=['weather'])
+def handle_weather(message):
+    try:
+        parts = message.text.split(" ", 1)
+        if len(parts) != 2:
+            bot.reply_to(message, "⚠️ Please provide a city name.\nExample: /weather London")
+            return
+
+        city = parts[1]
+        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
+        response = requests.get(url)
+        data = response.json()
+
+        if data.get("cod") != 200:
+            bot.reply_to(message, f"❌ City not found: {city}")
+            return
+
+        weather = data['weather'][0]['description'].title()
+        temp = data['main']['temp']
+        humidity = data['main']['humidity']
+        wind = data['wind']['speed']
+
+        reply = (
+            f"🌍 Weather in *{city.title()}*\n"
+            f"🌡 Temperature: {temp}°C\n"
+            f"🌤 Description: {weather}\n"
+            f"💧 Humidity: {humidity}%\n"
+            f"🌬 Wind Speed: {wind} m/s"
+        )
+        bot.send_message(message.chat.id, reply, parse_mode="Markdown")
+
+    except Exception as e:
+        print("Error:", e)
+        bot.reply_to(message, "⚠️ Something went wrong while fetching the weather.")
+
+# === Unknown message fallback ===
+@bot.message_handler(func=lambda message: True)
+def fallback(message):
+    bot.reply_to(message, "❓ Try /weather <city>")
+
+# === Start polling ===
+print("Bot is running...")
+bot.infinity_polling()
