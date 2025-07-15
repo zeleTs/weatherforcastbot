@@ -1,6 +1,7 @@
 import os
 import telebot
 import requests
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 # === Configuration ===
 BOT_TOKEN = "7676117456:AAHoTyyxV8ILubH4qlgSMkoOOPPQ5yZCYVM"
@@ -8,6 +9,22 @@ WEATHER_API_KEY = os.environ.get("WEATHER_API_KEY")
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # === /start command ===
+@bot.message_handler(commands=['start'])
+def handle_start(message):
+    bot.reply_to(message,
+        "🌤️ Welcome to Weather Bot!\n"
+        "Use /weather <city> to get weather info.\n"
+        "Or /location to share your current location.")
+
+# === /location command — asks for user location ===
+@bot.message_handler(commands=['location'])
+def ask_for_location(message):
+    markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+    button = KeyboardButton(text="📍 Send Location", request_location=True)
+    markup.add(button)
+    bot.send_message(message.chat.id, "📍 Please share your location:", reply_markup=markup)
+
+# === Handle user-shared location ===
 @bot.message_handler(content_types=['location'])
 def handle_location(message):
     try:
@@ -41,20 +58,19 @@ def handle_location(message):
         print("Error:", e)
         bot.reply_to(message, "⚠️ Something went wrong while fetching the weather for your location.")
 
-# === /weather command ===
+# === /weather command for city search ===
 @bot.message_handler(commands=['weather'])
 def handle_weather(message):
     try:
         parts = message.text.split(" ", 1)
-        if len(parts) != 2:
-            bot.reply_to(message, "⚠️ Please provide a city name.\nExample: /weather London")
+        if len(parts) != 2 or not parts[1].isalpha():
+            bot.reply_to(message, "⚠️ Please provide a valid city name (letters only).\nExample: /weather London")
             return
 
         city = parts[1]
         url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
         response = requests.get(url)
         data = response.json()
-        print("API response:", data)
 
         if data.get("cod") != 200:
             bot.reply_to(message, f"❌ City not found: {city}")
@@ -78,10 +94,10 @@ def handle_weather(message):
         print("Error:", e)
         bot.reply_to(message, "⚠️ Something went wrong while fetching the weather.")
 
-# === Unknown message fallback ===
+# === Fallback for unknown input ===
 @bot.message_handler(func=lambda message: True)
 def fallback(message):
-    bot.reply_to(message, "❓ Try /weather <city>")
+    bot.reply_to(message, "❓ Try /weather <city> or /location to get the weather.")
 
 # === Start polling ===
 print("Bot is running...")
