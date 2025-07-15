@@ -4,7 +4,7 @@ import requests
 
 # === Configuration ===
 BOT_TOKEN = "7676117456:AAHoTyyxV8ILubH4qlgSMkoOOPPQ5yZCYVM"
-WEATHER_API_KEY = "e259f0232f2bbed922e55a1facc3ef43"
+WEATHER_API_KEY = os.environ.get("e259f0232f2bbed922e55a1facc3ef43")
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # === /start command ===
