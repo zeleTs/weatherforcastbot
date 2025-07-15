@@ -3,6 +3,7 @@ import threading
 import time
 import http.server
 import socketserver
+import telebot  # <--- THIS was missing
 
 def keep_alive():
     PORT = int(os.environ.get("PORT", 10000))
