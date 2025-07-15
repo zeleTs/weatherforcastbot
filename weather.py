@@ -8,9 +8,38 @@ WEATHER_API_KEY = os.environ.get("WEATHER_API_KEY")
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # === /start command ===
-@bot.message_handler(commands=['start'])
-def handle_start(message):
-    bot.reply_to(message, "🌤️ Welcome to Weather Bot!\nType /weather <city> to get current weather.\nExample: /weather Addis Ababa")
+@bot.message_handler(content_types=['location'])
+def handle_location(message):
+    try:
+        lat = message.location.latitude
+        lon = message.location.longitude
+        
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}&units=metric"
+        response = requests.get(url)
+        data = response.json()
+        
+        if data.get("cod") != 200:
+            bot.reply_to(message, "❌ Could not fetch weather for this location.")
+            return
+        
+        city = data.get('name', 'your location')
+        weather = data['weather'][0]['description'].title()
+        temp = data['main']['temp']
+        humidity = data['main']['humidity']
+        wind = data['wind']['speed']
+        
+        reply = (
+            f"🌍 Weather at *{city}*\n"
+            f"🌡 Temperature: {temp}°C\n"
+            f"🌤 Description: {weather}\n"
+            f"💧 Humidity: {humidity}%\n"
+            f"🌬 Wind Speed: {wind} m/s"
+        )
+        bot.send_message(message.chat.id, reply, parse_mode="Markdown")
+    
+    except Exception as e:
+        print("Error:", e)
+        bot.reply_to(message, "⚠️ Something went wrong while fetching the weather for your location.")
 
 # === /weather command ===
 @bot.message_handler(commands=['weather'])
