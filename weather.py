@@ -1,6 +1,18 @@
 import os
-import telebot
-import requests
+import threading
+import time
+import http.server
+import socketserver
+
+def keep_alive():
+    PORT = int(os.environ.get("PORT", 10000))
+    handler = http.server.SimpleHTTPRequestHandler
+    with socketserver.TCPServer(("", PORT), handler) as httpd:
+        print(f"Serving dummy HTTP on port {PORT}")
+        httpd.serve_forever()
+
+threading.Thread(target=keep_alive).start()
+
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 # === Configuration ===
