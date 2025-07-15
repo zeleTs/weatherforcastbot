@@ -4,7 +4,7 @@ import requests
 
 # === Configuration ===
 BOT_TOKEN = "7676117456:AAHoTyyxV8ILubH4qlgSMkoOOPPQ5yZCYVM"
-WEATHER_API_KEY = os.environ.get("e259f0232f2bbed922e55a1facc3ef43")
+WEATHER_API_KEY = os.environ.get("WEATHER_API_KEY")
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # === /start command ===
@@ -16,7 +16,6 @@ def handle_start(message):
 @bot.message_handler(commands=['weather'])
 def handle_weather(message):
     try:
-        print("API response:", data)
         parts = message.text.split(" ", 1)
         if len(parts) != 2:
             bot.reply_to(message, "⚠️ Please provide a city name.\nExample: /weather London")
@@ -26,6 +25,7 @@ def handle_weather(message):
         url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
         response = requests.get(url)
         data = response.json()
+        print("API response:", data)
 
         if data.get("cod") != 200:
             bot.reply_to(message, f"❌ City not found: {city}")
