@@ -16,6 +16,7 @@ def handle_start(message):
 @bot.message_handler(commands=['weather'])
 def handle_weather(message):
     try:
+        print("API response:", data)
         parts = message.text.split(" ", 1)
         if len(parts) != 2:
             bot.reply_to(message, "⚠️ Please provide a city name.\nExample: /weather London")
