@@ -19,7 +19,7 @@ threading.Thread(target=keep_alive).start()
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 # === Configuration ===
-BOT_TOKEN = "BOT_TOKEN"
+BOT_TOKEN =  os.environ.get("BOT_TOKEN")
 WEATHER_API_KEY = os.environ.get("WEATHER_API_KEY")
 bot = telebot.TeleBot(BOT_TOKEN)
 
