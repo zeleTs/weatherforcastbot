@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: weather-bot
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python weather.py"
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: WEATHER_API_KEY
+        sync: false
