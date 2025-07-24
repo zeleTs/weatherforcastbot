@@ -1,5 +1,6 @@
 import os
 import re
+import requests
 import threading
 import time
 import http.server
@@ -76,42 +77,56 @@ def handle_location(message):
 
 # === /weather command for city search ===
 @bot.message_handler(commands=['weather'])
+@bot.message_handler(commands=['weather'])
 def handle_weather(message):
     try:
         parts = message.text.split(" ", 1)
-        if len(parts) != 2 or not re.fullmatch(r"[A-Za-z\s]+", parts[1]):
-            bot.reply_to(message, "⚠️ Please provide a valid city name (letters and spaces only).\nExample: /weather London")
+        if len(parts) != 2:
+            bot.reply_to(message, "⚠️ Please provide a city name.\nExample: /weather Addis Ababa")
             return
 
-        city = parts[1]
-        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
-        response = requests.get(url)
-        data = response.json()
+        input_city = parts[1].strip()
+        geo_url = f"http://api.openweathermap.org/geo/1.0/direct?q={input_city}&limit=1&appid={WEATHER_API_KEY}"
+        geo_response = requests.get(geo_url)
+        geo_data = geo_response.json()
+
+        if not geo_data:
+            bot.reply_to(message, "❌ Couldn't find a matching city. Please check the spelling.")
+            return
+
+        # Extract corrected city name and coordinates
+        city_name = geo_data[0]['name']
+        lat = geo_data[0]['lat']
+        lon = geo_data[0]['lon']
+        country = geo_data[0].get('country', '')
+
+        # Now fetch weather data using lat/lon
+        weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}&units=metric"
+        weather_response = requests.get(weather_url)
+        data = weather_response.json()
 
         if data.get("cod") != 200:
-            bot.reply_to(message, f"❌ City not found: {city}")
+            bot.reply_to(message, f"❌ Weather not found for {city_name}")
             return
 
-        # Example response message (you may have this already)
         temp = data["main"]["temp"]
         desc = data["weather"][0]["description"].capitalize()
-        weather = data['weather'][0]['description'].title()
-        temp = data['main']['temp']
-        humidity = data['main']['humidity']
-        wind = data['wind']['speed']
+        humidity = data["main"]["humidity"]
+        wind = data["wind"]["speed"]
 
         reply = (
-            f"🌍 Weather in *{city.title()}*\n"
+            f"🌍 Weather in {city_name}, {country}\n"
             f"🌡 Temperature: {temp}°C\n"
-            f"🌤 Description: {weather}\n"
+            f"🌤 Description: {desc}\n"
             f"💧 Humidity: {humidity}%\n"
             f"🌬 Wind Speed: {wind} m/s"
         )
-        bot.send_message(message.chat.id, reply, parse_mode="Markdown")
-       
+
+        bot.reply_to(message, reply)
 
     except Exception as e:
-        bot.reply_to(message, f"⚠️ Error: {str(e)}")
+        print("Error:", e)
+        bot.reply_to(message, "❗ An error occurred. Please try again later.")
         
 # === Fallback for unknown input ===
 @bot.message_handler(func=lambda message: True)
