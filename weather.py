@@ -79,8 +79,8 @@ def handle_weather(message):
     try:
         parts = message.text.split(" ", 1)
        if len(parts) != 2 or not re.fullmatch(r"[A-Za-z\s]+", parts[1]):
-    bot.reply_to(message, "⚠️ Please provide a valid city name (letters and spaces only).\nExample: /weather Addis Ababa")
-    return
+       bot.reply_to(message, "⚠️ Please provide a valid city name (letters and spaces only).\nExample: /weather Addis Ababa")
+       return
 
         city = parts[1]
         url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
