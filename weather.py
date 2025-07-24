@@ -8,6 +8,8 @@ import socketserver
 import telebot  # <--- THIS was missing
 import requests
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 
 def keep_alive():
     PORT = int(os.environ.get("PORT", 10000))
@@ -127,7 +129,39 @@ def handle_weather(message):
     except Exception as e:
         print("Error:", e)
         bot.reply_to(message, "❗ An error occurred. Please try again later.")
-        
+
+    keyboard = InlineKeyboardMarkup()
+    button = InlineKeyboardButton(text="🔮 5-Day Forecast", callback_data=f"forecast:{city}")
+    keyboard.add(button)
+    bot.send_message(message.chat.id, "Do you want the 5-day forecast?", reply_markup=keyboard)
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("forecast:"))
+def handle_forecast_callback(call):
+    city = call.data.split(":", 1)[1]
+    try:
+        forecast_url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={WEATHER_API_KEY}&units=metric"
+        response = requests.get(forecast_url)
+        data = response.json()
+
+        if data.get("cod") != "200":
+            bot.send_message(call.message.chat.id, f"❌ Forecast not available for {city}.")
+            return
+
+        message_lines = [f"🔮 5-Day Forecast for *{city.title()}*:"]
+        for i in range(0, 40, 8):  # Every 8th = roughly 1 forecast per day (3-hour intervals × 8 = 24h)
+            entry = data["list"][i]
+            date = entry["dt_txt"].split(" ")[0]
+            desc = entry["weather"][0]["description"].title()
+            temp = entry["main"]["temp"]
+            message_lines.append(f"📅 {date}: {temp}°C, {desc}")
+
+        forecast_msg = "\n".join(message_lines)
+        bot.send_message(call.message.chat.id, forecast_msg, parse_mode="Markdown")
+
+    except Exception as e:
+        print("Forecast error:", e)
+        bot.send_message(call.message.chat.id, "⚠️ Failed to get the forecast.")
+
 # === Fallback for unknown input ===
 @bot.message_handler(func=lambda message: True)
 def fallback(message):
