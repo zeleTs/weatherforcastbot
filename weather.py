@@ -78,9 +78,9 @@ def handle_location(message):
 def handle_weather(message):
     try:
         parts = message.text.split(" ", 1)
-       if len(parts) != 2 or not re.fullmatch(r"[A-Za-z\s]+", parts[1]):
-       bot.reply_to(message, "⚠️ Please provide a valid city name (letters and spaces only).\nExample: /weather Addis Ababa")
-       return
+        if len(parts) != 2 or not re.fullmatch(r"[A-Za-z\s]+", parts[1]):
+            bot.reply_to(message, "⚠️ Please provide a valid city name (letters and spaces only).\nExample: /weather London")
+            return
 
         city = parts[1]
         url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
@@ -91,24 +91,14 @@ def handle_weather(message):
             bot.reply_to(message, f"❌ City not found: {city}")
             return
 
-        weather = data['weather'][0]['description'].title()
-        temp = data['main']['temp']
-        humidity = data['main']['humidity']
-        wind = data['wind']['speed']
-
-        reply = (
-            f"🌍 Weather in *{city.title()}*\n"
-            f"🌡 Temperature: {temp}°C\n"
-            f"🌤 Description: {weather}\n"
-            f"💧 Humidity: {humidity}%\n"
-            f"🌬 Wind Speed: {wind} m/s"
-        )
-        bot.send_message(message.chat.id, reply, parse_mode="Markdown")
+        # Example response message (you may have this already)
+        temp = data["main"]["temp"]
+        desc = data["weather"][0]["description"].capitalize()
+        bot.reply_to(message, f"🌡️ {city} weather: {temp}°C, {desc}")
 
     except Exception as e:
-        print("Error:", e)
-        bot.reply_to(message, "⚠️ Something went wrong while fetching the weather.")
-
+        bot.reply_to(message, f"⚠️ Error: {str(e)}")
+        
 # === Fallback for unknown input ===
 @bot.message_handler(func=lambda message: True)
 def fallback(message):
