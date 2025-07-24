@@ -95,6 +95,11 @@ def handle_weather(message):
         # Example response message (you may have this already)
         temp = data["main"]["temp"]
         desc = data["weather"][0]["description"].capitalize()
+        weather = data['weather'][0]['description'].title()
+        temp = data['main']['temp']
+        humidity = data['main']['humidity']
+        wind = data['wind']['speed']
+
         reply = (
             f"🌍 Weather in *{city.title()}*\n"
             f"🌡 Temperature: {temp}°C\n"
@@ -102,6 +107,8 @@ def handle_weather(message):
             f"💧 Humidity: {humidity}%\n"
             f"🌬 Wind Speed: {wind} m/s"
         )
+        bot.send_message(message.chat.id, reply, parse_mode="Markdown")
+       
 
     except Exception as e:
         bot.reply_to(message, f"⚠️ Error: {str(e)}")
